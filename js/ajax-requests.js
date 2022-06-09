@@ -1,3 +1,4 @@
+"use strict;";
 // createRequest retuns promise of requested url
 const createRequest = ({
   url,

@@ -18,57 +18,96 @@ const successAlert = $first(".form-alert-success");
 const searchBtn = $first("#search-button");
 const resetBtn = $first("#search-reset");
 
+// Function to format decimal numbers
 const formatFloat = (value) => parseFloat(value).toFixed(4);
 
+// Function to reset search data tables and hide the error message
 const resetSearchData = ({ clearFormFields = true }) => {
   hideElement(errorAlert);
   hideElement(successAlert);
   hideSections(searchDataSections);
+
+  // Resetting the form fields is required to clear the form
   if (clearFormFields) {
     startDateTxt.value = "";
     endDateTxt.value = "";
   }
 };
 
-const resetHandler = (e) => {
-  resetSearchData({});
+// API URL Generator
+const getAPIURL = (rateType, startDate, endDate) => {
+  return `https://www.bankofcanada.ca/valet/observations/${rateType}/json?start_date=${startDate}&end_date=${endDate}`;
 };
 
+// Fetching data from API and creating the rate values array
 const fetchRates = async (url, parameterName = "AVG.INTWO") => {
+  /**
+   *  Fetching Data from API and processing it
+   */
+
   const method = `get`;
+  // Get API Response
   const response = await getResponseJSON({
     url,
     body: new FormData(),
     method,
     mode: "cors",
   });
+  // Check if the response is successful and has data
   const success = (response?.observations ?? []).length > 0;
   const message = success
     ? "Data Fetched successfully"
     : "Something went wrong";
   const values = [];
-  const observations = response?.observations ?? [];
-  observations.forEach((observation) => {
-    values.push(Number(observation[parameterName]?.v ?? 0));
-  });
-  return values;
+
+  // Processing the data on successful response
+  if (success) {
+    const observations = response?.observations ?? [];
+    observations.forEach((observation) => {
+      // Push values in array
+      values.push(Number(observation[parameterName]?.v ?? 0));
+    });
+  }
+  // Return the response
+  return { success, message, values };
 };
 
+// Make a request to the APIs and retrieve the data
 const fetchData = async (startDate, endDate) => {
-  const urlCORRA = `https://www.bankofcanada.ca/valet/observations/AVG.INTWO/json?start_date=${startDate}&end_date=${endDate}`;
+  /**
+   *  Fetching Data from APIs
+   */
 
-  const urlFXUSDCAD = `https://www.bankofcanada.ca/valet/observations/FXUSDCAD/json?start_date=${startDate}&end_date=${endDate}`;
+  const corraPrefix = "AVG.INTWO";
+  const FXUSDCADPrefix = "FXUSDCAD";
+  const urlCORRA = getAPIURL(corraPrefix, startDate, endDate);
 
-  const corraData = await fetchRates(urlCORRA, "AVG.INTWO");
-  const usdCADData = await fetchRates(urlFXUSDCAD, "FXUSDCAD");
-  const response = [corraData, usdCADData];
+  const urlFXUSDCAD = getAPIURL(FXUSDCADPrefix, startDate, endDate);
+  let usdCADData = [],
+    corraData = [],
+    success = false,
+    message = "";
+  ({
+    success,
+    message,
+    values: corraData,
+  } = await fetchRates(urlCORRA, corraPrefix));
+  if (success) {
+    ({
+      success,
+      message,
+      values: usdCADData,
+    } = await fetchRates(urlFXUSDCAD, FXUSDCADPrefix));
+  }
+  const response = { success, message, corraData, usdCADData };
   return response;
 };
 
-const processData = (data = []) => {
+// Calculates high, minimum and average values
+const calculateStats = (data = []) => {
   let high = data[0] ?? 0;
   let minimum = data[0] ?? 0;
-  let sum = data[0] ?? 0;
+  let sum = 0;
   data.forEach((value) => {
     if (value > high) {
       high = value;
@@ -78,14 +117,15 @@ const processData = (data = []) => {
     }
     sum += value;
   });
-  return [
-    formatFloat(high),
-    formatFloat(minimum),
-    formatFloat(sum / data.length),
-  ];
+  return {
+    high: formatFloat(high),
+    minimum: formatFloat(minimum),
+    average: formatFloat(sum / data.length),
+  };
 };
 
-const pearson = (x, y) => {
+// Function to calculate the pearson coefficient
+const pearson = (x = [], y = []) => {
   const promedio = (l) => l.reduce((s, a) => s + a, 0) / l.length;
   const calc = (v, prom) =>
     Math.sqrt(v.reduce((s, a) => s + a * a, 0) - n * prom * prom);
@@ -113,8 +153,9 @@ const pearson = (x, y) => {
   );
 };
 
-const showData = (data, sectionDiv) => {
-  const [high, minimum, average] = data;
+// Present data stats in table
+const displayStats = (data, sectionDiv) => {
+  const { high, minimum, average } = data;
 
   $first("tbody", sectionDiv).innerHTML = `<tr><td>${high}</td>
   <td>${minimum}</td>
@@ -122,11 +163,14 @@ const showData = (data, sectionDiv) => {
     </tr>`;
 };
 
+// Search Form Handler
 const searchHandler = async (e) => {
   e.preventDefault();
 
   // hide error messages and data tables
   resetSearchData({ clearFormFields: false });
+
+  // Retrieve the form values
   const startDate = startDateTxt.value.trim();
   const endDate = endDateTxt.value.trim();
 
@@ -149,23 +193,43 @@ const searchHandler = async (e) => {
     return;
   }
 
+  // Process form with valid data inputs
+  let success = false,
+    message = "",
+    corraData = [],
+    usdCADData = [];
+
   // fetch API data
-  const [corraData, usdCADData] = await fetchData(startDate, endDate);
+  ({ success, message, corraData, usdCADData } = await fetchData(
+    startDate,
+    endDate
+  ));
 
-  // Process and present data
-  const corraStats = processData(corraData);
-  const usdCADStats = processData(usdCADData);
-  showData(corraStats, corraRateDiv);
-  showData(usdCADStats, usdCADRateDiv);
+  // Present data when Api call is successful
+  if (success) {
+    // Process and present data
+    const corraStats = calculateStats(corraData);
+    const usdCADStats = calculateStats(usdCADData);
+    displayStats(corraStats, corraRateDiv);
+    displayStats(usdCADStats, usdCADRateDiv);
 
-  // Update pearson correlation coefficient
-  const pearsonValue = formatFloat(pearson(corraData, usdCADData));
-  const pearsonLbl = $first("#pearson-val");
-  updateContent(pearsonLbl, pearsonValue);
+    // Update pearson correlation coefficient
+    const pearsonValue = formatFloat(pearson(corraData, usdCADData));
+    const pearsonLbl = $first("#pearson-val");
+    updateContent(pearsonLbl, pearsonValue);
 
-  //  Display data tables
-  showSections(searchDataSections);
-  showElement(successAlert);
+    //  Display data tables
+    showSections(searchDataSections);
+    showElement(successAlert);
+  } else {
+    updateContent(errorMessageLbl, message);
+    showElement(errorAlert);
+  }
+};
+
+// Reset search Form Handler
+const resetHandler = (e) => {
+  resetSearchData({});
 };
 
 /** Event Registration */

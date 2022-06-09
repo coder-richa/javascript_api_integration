@@ -1,33 +1,27 @@
+"use strict;";
+// Updates the DOM to by updating the content of the given element
 const updateContent = (element, content) => {
   element.innerHTML = content;
 };
-const checkHidden = (elm) => window.getComputedStyle(elm).display === "none";
-const updateVisibility = (elem, display_status) => {
-  elem.style.display = display_status;
-};
 
-const toggleElement = (element) => {
-  if (checkHidden(element)) {
-    updateVisibility(element, "block");
-  } else {
-    updateVisibility(element, "none");
-  }
-};
-
+// Makes element visible on the DOM
 const showElement = (element) => {
   element.style.display = "block";
 };
 
+// Makes element hidden on the DOM
 const hideElement = (element) => {
   element.style.display = "none";
 };
 
+// Makes elements visible on the DOM
 const hideSections = (sections) => {
   [...sections].forEach((section) => {
     hideElement(section);
   });
 };
 
+// Makes elements hidden on the DOM
 const showSections = (sections) => {
   [...sections].forEach((section) => {
     showElement(section);
