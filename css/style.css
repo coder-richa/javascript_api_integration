@@ -1,0 +1,131 @@
+@font-face {
+  font-family: roboto-light;
+  src: url("../fonts/roboto-light.woff");
+}
+:root {
+  --background-primary: #ffffff;
+  --background-secondary: #0077b6;
+  --background-secondary-light: #00b4d8;
+  --line-height: 1rem;
+  --padding-secondary: 1.2rem;
+  --color-light: #caf0f8;
+  --color-dark: #000000;
+}
+/* General styling starts */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: roboto-light;
+}
+
+header {
+  background-color: var(--background-secondary);
+  color: var(--background-primary);
+  padding: 10px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+h2 {
+  font-weight: bold;
+  padding: 10px;
+  margin-left: 20px;
+}
+.disabled {
+  opacity: 0.5;
+}
+
+.hidden {
+  display: none;
+}
+
+.form-alert-success {
+  background-color: #2ac3a2;
+  color: #ffffff;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+.form-alert-failure {
+  background-color: #f20000;
+  color: #ffffff;
+  padding: 10px;
+  border-radius: 5px;
+  opacity: 0.7;
+
+  margin-bottom: 10px;
+}
+.error-message {
+  display: block;
+  color: red;
+  font-size: 0.8rem;
+}
+.required::after {
+  content: "*";
+  color: red;
+  padding-left: 0.2rem;
+}
+form {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  margin: 0 auto;
+  text-align: left;
+  padding: var(--padding-secondary);
+}
+label {
+  display: block;
+  font-weight: bold;
+  padding-bottom: 0.3rem;
+}
+input[type="date"] {
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--background-secondary);
+  background-color: #ffffff;
+}
+button,
+.button {
+  padding: 0.6rem;
+  background-color: var(--background-secondary);
+  color: var(--color-light);
+  min-width: 10rem;
+  cursor: pointer;
+  border: none;
+}
+
+.button-reset {
+  background-color: var(--color-dark);
+  color: var(--color-light);
+}
+span.button {
+  display: inline-block;
+}
+button:hover {
+  background-color: var(--background-secondary-light);
+  color: var(--color-dark);
+}
+table {
+  border-collapse: collapse;
+  width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 10px;
+}
+
+thead {
+  background-color: var(--background-secondary-light);
+  color: var(--color-light);
+}
+
+tr {
+  border-bottom: 1px solid #ddd;
+}
+td,
+th {
+  padding: 10px;
+  text-align: left;
+}
